@@ -60,7 +60,7 @@ class FileSystemViewer(tk.Tk):
         for item in os.listdir(path):
             self.listbox.insert(tk.END, item)
 
-    def on_item_double_click(self, event):
+    def on_item_double_click(self, _):
         selection = self.listbox.curselection()
         if selection:
             index = selection[0]
@@ -69,17 +69,23 @@ class FileSystemViewer(tk.Tk):
             if os.path.isdir(new_path):
                 self.list_directory(new_path)
 
-    def on_item_select(self, event):
+    def on_item_select(self, _):
         selection = self.listbox.curselection()
         if selection:
             index = selection[0]
             item = self.listbox.get(index)
-            new_path = os.path.join(self.current_path, item)
+            new_path = str(os.path.join(self.current_path, item))
 
             self.name_label.config(text=f"Name: {item}")
             folders_inside = [f for f in os.listdir(new_path) if
                               os.path.isdir(os.path.join(new_path, f))] if os.path.isdir(new_path) else []
-            self.size_label.config(text=f"Size: {format_size(os.path.getsize(new_path))}" if os.path.isfile(new_path) else f"Subfolders: {len(folders_inside)}")
+
+            if os.path.isfile(new_path):
+                size = f"Size: {format_size(os.path.getsize(new_path))}"
+            else:
+                size = f"Subfolders: {len(folders_inside)}"
+
+            self.size_label.config(text=size)
 
             self.content_text.config(state='normal')
             self.content_text.delete(1.0, tk.END)
@@ -90,7 +96,7 @@ class FileSystemViewer(tk.Tk):
                 try:
                     with open(new_path, 'r') as file_content:
                         self.content_text.insert(tk.END, file_content.read())
-                except:
+                except UnicodeDecodeError:
                     self.content_text.insert(tk.END, "Content not readable")
             self.content_text.config(state='disabled')
 
