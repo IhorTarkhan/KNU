@@ -5,6 +5,23 @@ _time_delay = 0.5
 
 common = [0]  # to pass as a reference
 
+tickets = {
+    1: {'price': 28, 'name': 'Kyiv'},
+    2: {'price': 37, 'name': 'Istanbul'},
+    3: {'price': 50, 'name': 'London'},
+    4: {'price': 77, 'name': 'Berlin'},
+    5: {'price': 91, 'name': 'Paris'}
+}
+
+money = {
+    1: 50,
+    2: 25,
+    5: 20,
+    10: 15,
+    25: 10,
+    50: 5
+}
+
 
 def ts(_local, _common):
     if _common[0] == 0:
@@ -40,7 +57,19 @@ class ProcesB(threading.Thread):
         while self._local[0] == 1:
             ts(self._local, common)
 
-        print("Proces B: command", self._param)
+        temp_money = money.copy()
+        amount = self._param
+
+        for par in sorted(temp_money.keys(), reverse=True):
+            while amount >= par and temp_money[par] > 0:
+                amount -= par
+                temp_money[par] -= 1
+
+        if amount == 0:
+            money.update(temp_money)
+            print("Proces B: success to give the rest, money:", money)
+        else:
+            print("Proces B: impossible to give the rest money:", money)
 
         common[0] = 0
 
@@ -53,9 +82,8 @@ class ProcesA(threading.Thread):
         self._local = [0]  # to pass as a reference
 
     def _target(self):
-        self.proces_b.start()
         while not self._stop_event.is_set():
-            command = input("Proces A: command ")
+            command = input('Proces A: command ')
 
             if not command.isnumeric():
                 self._stop_event.set()
@@ -70,14 +98,25 @@ class ProcesA(threading.Thread):
         while self._local[0] == 1:
             ts(self._local, common)
 
-        common[0] = 0
+        if command == 0:
+            print('Proces A: Turning on Proces B')
+            self.proces_b.start()
+            common[0] = 0
+            print()
+            return
 
-        self.proces_b.trigger(command)
+        ticket = tickets[command]
+        rest = 100 - ticket['price']
+        print('Proces A: Ticket to', ticket['name'], 'for', ticket['price'], 'копійок, Rest:', rest, 'копійок')
+
+        common[0] = 0
+        self.proces_b.trigger(rest)
+        print()
 
 
 def main():
     ProcesA().start()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
