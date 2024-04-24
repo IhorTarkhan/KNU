@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Sorter</title>
+    <style>
+        #loader {
+            border: 2px solid lightgray;
+            border-top: 2px solid blue;
+            border-radius: 50%;
+            width: 12px;
+            height: 12px;
+            animation: spin 0.5s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+<button onclick="callSorter()">Execute</button>
+<div style="display: flex">
+    <div id="output" style="margin-right: 10px"></div>
+    <div style="display: flex">
+        <div id="average" style="margin-right: 10px"></div>
+        <div id="loader" style="display: none"></div>
+    </div>
+</div>
+
+<script>
+    const length = 10_000
+    const max = length * 10
+    const repeat = 100
+
+    async function callSorter() {
+        document.getElementById('loader').style.display = null
+
+        document.getElementById('output').innerHTML = ''
+
+        const times = []
+
+        for (let i = 1; i <= repeat; i++) {
+            const array = Array.from({length}, () => Math.floor(Math.random() * max));
+            const start = new Date().getTime()
+            await fetch('http://127.0.0.1:5000/server', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(array)
+            })
+            const end = new Date().getTime()
+            document.getElementById('output').innerHTML += `Iteration ${i} took ${end - start}ms<br>`
+            times.push(end - start)
+            document.getElementById('average').innerHTML = `Average: ${Math.round(times.reduce((a, b) => a + b, 0) / times.length)}ms`
+        }
+        document.getElementById('loader').style.display = 'none'
+    }
+</script>
+</body>
+</html>
