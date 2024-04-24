@@ -1,7 +1,17 @@
 import threading
 import time
 
-_time_delay = 0.2
+_time_delay = 0.5
+
+common = [0]  # to pass as a reference
+
+
+def ts(_local, _common):
+    if _common[0] == 0:
+        _common[0] = 1
+        _local[0] = 0
+    else:
+        time.sleep(_time_delay)
 
 
 class ProcesB(threading.Thread):
@@ -9,7 +19,7 @@ class ProcesB(threading.Thread):
         threading.Thread.__init__(self, target=self._target)
         self._stop_event = threading.Event()
         self._param = None
-        self.local = [0]
+        self._local = [0]  # to pass as a reference
 
     def _target(self):
         while not self._stop_event.is_set():
@@ -26,7 +36,13 @@ class ProcesB(threading.Thread):
         self._stop_event.set()
 
     def execute(self):
+        self._local[0] = 1
+        while self._local[0] == 1:
+            ts(self._local, common)
+
         print("Proces B: command", self._param)
+
+        common[0] = 0
 
 
 class ProcesA(threading.Thread):
@@ -34,6 +50,7 @@ class ProcesA(threading.Thread):
         super().__init__(target=self._target)
         self._stop_event = threading.Event()
         self.proces_b = ProcesB()
+        self._local = [0]  # to pass as a reference
 
     def _target(self):
         self.proces_b.start()
@@ -49,6 +66,12 @@ class ProcesA(threading.Thread):
         self.proces_b.stop()
 
     def execute(self, command):
+        self._local[0] = 1
+        while self._local[0] == 1:
+            ts(self._local, common)
+
+        common[0] = 0
+
         self.proces_b.trigger(command)
 
 
